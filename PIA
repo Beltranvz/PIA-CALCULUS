@@ -1,53 +1,121 @@
-## 🔷 Area Calculation using Shoelace Formula
+import matplotlib
+matplotlib.use('TkAgg')  # Para entornos como VSCode
 
-We want to compute the area enclosed by a series of ordered 2D points (x, y). This is done using the **Shoelace formula**, which is a classic algorithm in computational geometry for calculating the area of a polygon when the vertices are known.
-
-The formula is:
-
-\[
-\text{Area} = \frac{1}{2} \left| \sum_{i=0}^{n-1} (x_i y_{i+1} - y_i x_{i+1}) \right|
-\]
-
-This formula "walks around" the polygon and performs a determinant-like summation.
-
-Let's now implement it step-by-step.
-
-# Let's first ensure we have the 'points' list loaded from a file
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import sympy as sp
+import numpy as np
 import pickle
+
+# Cargar la imagen
+img = mpimg.imread('steve.png')
+
+# --- Funciones auxiliares ---
+
+def polynomial_approximation(points, degree):
+    x = sp.symbols('x')
+    X = np.array([p[0] for p in points])
+    Y = np.array([p[1] for p in points])
+
+    coeffs = np.polyfit(X, Y, degree)
+    poly = sum(c * x**i for i, c in enumerate(reversed(coeffs)))
+    
+    return poly, points
+
+def plot_functions_on_interval(functions):
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[-1, 1, -1, 1])
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
+
+    x = sp.symbols('x')
+
+    for i, (func, points) in enumerate(functions):
+        interval = [min([p[0] for p in points]), max([p[0] for p in points])]
+        f_lambdified = sp.lambdify(x, func, 'numpy')
+        x_vals = np.linspace(interval[0], interval[1], 100)
+        y_vals = f_lambdified(x_vals)
+        ax.plot(x_vals, y_vals, label=f'f_{i}')
+        ax.scatter([p[0] for p in points], [p[1] for p in points], color='red')
+    
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=6)
+    plt.show()
+
+# --- Leer puntos guardados ---
 
 with open('points.pkl', 'rb') as f:
     points = pickle.load(f)
 
-print(f"Number of points loaded: {len(points)}")
-### 1️⃣ Prepare the coordinates
+print(f"Número de puntos cargados: {len(points)}")
 
-We extract the x and y coordinates from the list of points. Then, we **append the first point at the end** of the list to close the polygon loop.
-x_coords = [p[0] for p in points] + [points[0][0]]  # Close the polygon by repeating the first point
+# --- Segmentación y grados ---
+
+points_set_degree = []
+
+points_set_degree.append((points[0:2], 1))
+points_set_degree.append((points[1:3], 1))
+points_set_degree.append((points[2:4], 1))
+points_set_degree.append((points[3:5], 1))
+points_set_degree.append((points[4:6], 1))
+points_set_degree.append((points[5:7], 1))
+points_set_degree.append((points[6:8], 1))
+points_set_degree.append((points[7:9], 1))
+points_set_degree.append((points[8:10], 1))
+points_set_degree.append((points[9:11], 1))
+points_set_degree.append((points[10:12], 1))
+points_set_degree.append((points[11:13], 1))
+points_set_degree.append((points[12:14], 1))
+points_set_degree.append((points[13:15], 1))
+points_set_degree.append((points[14:16], 1))
+points_set_degree.append((points[15:17], 1))
+points_set_degree.append((points[16:18], 1))
+points_set_degree.append((points[17:19], 1))
+points_set_degree.append((points[18:20], 1))
+points_set_degree.append((points[19:21], 1))
+points_set_degree.append((points[20:22], 1))
+points_set_degree.append((points[21:23], 1))
+points_set_degree.append((points[22:24], 1))
+points_set_degree.append((points[23:25], 1))
+points_set_degree.append((points[24:26], 1))
+points_set_degree.append((points[25:27], 1))
+# Cierre del pelín lit
+points_set_degree.append(([points[14], points[15]], 1))
+
+# Cierre del contorno
+points_set_degree.append(([points[26], points[0]], 1))  # <- faltaba este
+
+# --- Aproximación polinomial por segmento ---
+
+functions = []
+for idx, (pts, deg) in enumerate(points_set_degree):
+    if len(pts) >= deg + 1:
+        functions.append(polynomial_approximation(pts, deg))
+    else:
+        print(f"Segmento {idx} saltado: se necesitan al menos {deg + 1} puntos, pero se dieron {len(pts)}")
+
+# --- Calcular área usando fórmula del polígono (Shoelace) ---
+
+x_coords = [p[0] for p in points] + [points[0][0]]  # cerrar el polígono
 y_coords = [p[1] for p in points] + [points[0][1]]
-
-print("X coords:", x_coords)
-print("Y coords:", y_coords)
-### 2️⃣ Apply the Shoelace formula
-
-We compute the two cross-products:
-- \( x_i \cdot y_{i+1} \)
-- \( y_i \cdot x_{i+1} \)
-
-and take the absolute difference of their sums, divided by 2.
-import numpy as np
 
 x = np.array(x_coords)
 y = np.array(y_coords)
-
-# Apply the Shoelace formula
 area = 0.5 * np.abs(np.dot(x[:-1], y[1:]) - np.dot(y[:-1], x[1:]))
 
-print(f"🔹 Total area enclosed: {area:.4f}")
+print(f"Área total aproximada: {area}")
 
-### ✅ Final Notes
+# --- Graficar curvas sobre la imagen ---
+plot_functions_on_interval(functions)
 
-- This method assumes the points form a **simple, non-intersecting polygon**.
-- The order of the points matters: they must go around the shape either clockwise or counter-clockwise.
-- The formula works by computing the signed area, and `np.abs()` ensures we return the positive area value.
+# --- Graficar el área rellena sobre la imagen ---
+def plot_area_on_image():
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[-1, 1, -1, 1])
+    ax.fill(x_coords, y_coords, color='blue', alpha=0.3)
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
+    ax.set_title(f"Área aproximada: {area:.4f}")
+    plt.show()
 
-You now have an accurate estimation of the area enclosed by your manually selected points!
+plot_area_on_image()
+
