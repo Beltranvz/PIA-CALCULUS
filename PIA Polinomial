@@ -1,0 +1,57 @@
+import matplotlib
+matplotlib.use('TkAgg')  # IMPORTANTE: antes de importar pyplot
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import pickle
+
+# Cargar la imagen
+img = mpimg.imread('steve.png')
+
+def plot_points_on_image(img, points=[]):
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[-1, 1, -1, 1])
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
+    if points:
+        x_points, y_points = zip(*points)
+        for i, (x, y) in enumerate(points):
+            ax.text(x, y, str(i), color="black", fontsize=10)
+        ax.plot(x_points, y_points, 'ro')
+    plt.show()
+
+def select_points_on_image(img):
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[-1, 1, -1, 1])
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
+
+    # Seleccionar puntos con clics del mouse
+    points = plt.ginput(n=-1, timeout=120, show_clicks=True)
+    plt.close(fig)
+    return points
+
+# Ejecutar selección de puntos
+points = select_points_on_image(img)
+
+try:
+    with open('points.pkl', 'rb') as f:
+        existing_points = pickle.load(f)
+except FileNotFoundError:
+    existing_points = []
+
+# Agregar puntos nuevos a los anteriores
+all_points = existing_points + points
+
+# Guardar todos los puntos en el archivo
+with open('points.pkl', 'wb') as f:
+    pickle.dump(all_points, f)
+
+# Mostrar puntos seleccionados
+print("Selected points:", points)
+
+# Mostrar imagen con puntos seleccionados
+plot_points_on_image(img, points)
+
+
+
