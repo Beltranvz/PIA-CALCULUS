@@ -1,0 +1,53 @@
+## 🔷 Area Calculation using Shoelace Formula
+
+We want to compute the area enclosed by a series of ordered 2D points (x, y). This is done using the **Shoelace formula**, which is a classic algorithm in computational geometry for calculating the area of a polygon when the vertices are known.
+
+The formula is:
+
+\[
+\text{Area} = \frac{1}{2} \left| \sum_{i=0}^{n-1} (x_i y_{i+1} - y_i x_{i+1}) \right|
+\]
+
+This formula "walks around" the polygon and performs a determinant-like summation.
+
+Let's now implement it step-by-step.
+
+# Let's first ensure we have the 'points' list loaded from a file
+import pickle
+
+with open('points.pkl', 'rb') as f:
+    points = pickle.load(f)
+
+print(f"Number of points loaded: {len(points)}")
+### 1️⃣ Prepare the coordinates
+
+We extract the x and y coordinates from the list of points. Then, we **append the first point at the end** of the list to close the polygon loop.
+x_coords = [p[0] for p in points] + [points[0][0]]  # Close the polygon by repeating the first point
+y_coords = [p[1] for p in points] + [points[0][1]]
+
+print("X coords:", x_coords)
+print("Y coords:", y_coords)
+### 2️⃣ Apply the Shoelace formula
+
+We compute the two cross-products:
+- \( x_i \cdot y_{i+1} \)
+- \( y_i \cdot x_{i+1} \)
+
+and take the absolute difference of their sums, divided by 2.
+import numpy as np
+
+x = np.array(x_coords)
+y = np.array(y_coords)
+
+# Apply the Shoelace formula
+area = 0.5 * np.abs(np.dot(x[:-1], y[1:]) - np.dot(y[:-1], x[1:]))
+
+print(f"🔹 Total area enclosed: {area:.4f}")
+
+### ✅ Final Notes
+
+- This method assumes the points form a **simple, non-intersecting polygon**.
+- The order of the points matters: they must go around the shape either clockwise or counter-clockwise.
+- The formula works by computing the signed area, and `np.abs()` ensures we return the positive area value.
+
+You now have an accurate estimation of the area enclosed by your manually selected points!
